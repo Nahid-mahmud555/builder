@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z-Drop Live Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00d2ff; --bg: #0b0f19; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg); color: #f1f5f9; min-height: 100vh; padding: 20px; }
+        .container { width: 100%; max-width: 850px; margin: 0 auto; }
+
+        /* Interface 1: Input */
+        #inputInterface { display: block; }
+        .setup-card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--border); padding: 30px; border-radius: 30px; }
+        .box-group { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 20px; border-left: 4px solid var(--primary); }
+        label { display: block; font-size: 11px; color: #94a3b8; margin: 10px 0 5px 0; font-weight: 700; text-transform: uppercase; }
+        input, textarea, select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; outline: none; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; cursor: pointer; font-weight: 700; text-transform: uppercase; transition: 0.3s; }
+        .btn-gen { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; margin-top: 10px; }
+        
+        /* Interface 2: Output */
+        #outputInterface { display: none; }
+        .share-area { text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(0, 210, 255, 0.05); border-radius: 20px; border: 1px dashed var(--border); }
+        
+        /* Hidden input but needed for copy */
+        #shareLink { position: absolute; left: -9999px; }
+
+        .copy-btn {
+            background: var(--primary); color: #000; padding: 12px 25px;
+            border-radius: 12px; font-weight: 800; border: none; cursor: pointer;
+            transition: 0.3s; font-size: 14px;
+        }
+        .copy-btn.copied { background: #10b981; color: white; }
+
+        .card-view { background: var(--glass); border: 1px solid var(--border); padding: 30px; border-radius: 25px; margin-bottom: 20px; animation: slideIn 0.5s ease; }
+        .o-title { color: var(--primary); font-size: 26px; margin-bottom: 10px; }
+        .o-desc { white-space: pre-wrap; color: #cbd5e1; line-height: 1.6; margin-bottom: 15px; }
+        
+        .details-box { max-height: 0; overflow: hidden; transition: 0.4s; background: rgba(0,0,0,0.2); border-radius: 10px; white-space: pre-wrap; color: #94a3b8; padding: 0 15px; }
+        .details-box.open { max-height: 1000px; padding: 15px; margin: 10px 0; border: 1px solid var(--border); }
+        
+        .faq-section { margin-top: 40px; padding: 30px; background: rgba(0, 210, 255, 0.03); border-radius: 25px; border: 1px solid var(--border); }
+        .faq-item { background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 12px; overflow: hidden; }
+        .faq-q { width: 100%; padding: 15px; background: none; border: none; color: #fff; text-align: left; cursor: pointer; font-weight: 600; display: flex; justify-content: space-between; }
+        .faq-a { max-height: 0; overflow: hidden; transition: 0.3s; padding: 0 15px; color: #94a3b8; white-space: pre-wrap; }
+        .faq-a.show { max-height: 500px; padding: 10px 15px 15px; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="inputInterface">
+        <div class="setup-card">
+            <h1 style="text-align:center; margin-bottom:20px;">Z-Drop <span>Engine</span></h1>
+            <div style="text-align:center; margin-bottom:20px;">
+                <select id="boxNum" style="width: 100px; padding: 8px; border-radius: 8px; background: #000; color: #fff; border: 1px solid var(--border);">
+                    <option value="1">1 Box</option>
+                    <option value="2">2 Boxes</option>
+                    <option value="3">3 Boxes</option>
+                </select>
+                <button onclick="makeFields()" style="padding: 10px 20px; border-radius: 10px; cursor: pointer; background: var(--primary); border:none; font-weight:700; margin-left:10px;">Create Fields</button>
+            </div>
+            <div id="inputArea"></div>
+            <button id="mainBtn" class="btn btn-gen" style="display:none;" onclick="processData()">Publish & Get Link</button>
+        </div>
+    </div>
+
+    <div id="outputInterface">
+        <div class="share-area" id="shareArea">
+            <input type="text" id="shareLink" readonly>
+            <button id="copyBtn" class="copy-btn" onclick="copyLink()">COPY SHAREABLE LINK</button>
+            <button onclick="location.href=window.location.pathname" style="background:none; border:none; color:#94a3b8; cursor:pointer; margin-left:15px; font-size:12px; text-decoration:underline;">Create New</button>
+        </div>
+        
+        <div id="cardArea"></div>
+        
+        <div id="faqArea" class="faq-section" style="display:none;">
+            <h2 style="color:var(--primary); margin-bottom:20px; text-align:center;">Q&A Section</h2>
+            <div id="faqList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('d')) {
+            try {
+                const encodedData = urlParams.get('d');
+                const jsonStr = decodeURIComponent(atob(encodedData));
+                const data = JSON.parse(jsonStr);
+                renderFromData(data);
+                document.getElementById('shareArea').style.display = "none"; 
+            } catch (e) { console.error("Link Invalid"); }
+        }
+    }
+
+    function makeFields() {
+        const count = document.getElementById('boxNum').value;
+        const area = document.getElementById('inputArea');
+        area.innerHTML = "";
+        for(let i=1; i<=count; i++) {
+            area.innerHTML += `<div class="box-group">
+                <label>Title</label><input type="text" class="i-t">
+                <label>Short Description</label><textarea class="i-d" rows="2"></textarea>
+                <label>Full Details (Optional)</label><textarea class="i-det" rows="3"></textarea>
+                <label>FAQ (Optional)</label>
+                <input type="text" class="i-q" placeholder="Question"><textarea class="i-a" rows="2" placeholder="Answer"></textarea>
+            </div>`;
+        }
+        document.getElementById('mainBtn').style.display = "block";
+    }
+
+    function processData() {
+        const data = [];
+        const titles = document.querySelectorAll('.i-t');
+        const descs = document.querySelectorAll('.i-d');
+        const details = document.querySelectorAll('.i-det');
+        const qs = document.querySelectorAll('.i-q');
+        const as = document.querySelectorAll('.i-a');
+
+        titles.forEach((t, i) => {
+            if(t.value.trim() !== "") {
+                data.push({ t: t.value, d: descs[i].value, det: details[i].value, q: qs[i].value, a: as[i].value });
+            }
+        });
+
+        if (data.length === 0) return alert("Please add at least one title!");
+
+        const jsonStr = JSON.stringify(data);
+        const encoded = btoa(encodeURIComponent(jsonStr));
+        const finalLink = window.location.href.split('?')[0] + "?d=" + encoded;
+
+        document.getElementById('shareLink').value = finalLink;
+        renderFromData(data);
+        document.getElementById('inputInterface').style.display = "none";
+        document.getElementById('outputInterface').style.display = "block";
+        document.getElementById('shareArea').style.display = "block";
+    }
+
+    function renderFromData(data) {
+        const cardArea = document.getElementById('cardArea');
+        const faqList = document.getElementById('faqList');
+        const faqArea = document.getElementById('faqArea');
+        cardArea.innerHTML = ""; faqList.innerHTML = "";
+        let hasFaq = false;
+
+        data.forEach(item => {
+            let detHTML = item.det ? `<button onclick="this.nextElementSibling.classList.toggle('open')" style="cursor:pointer; padding:8px 15px; border-radius:10px; border:none; background:rgba(255,255,255,0.1); color:#fff; font-size:12px;">View More</button><div class="details-box">${item.det}</div>` : "";
+            cardArea.innerHTML += `<div class="card-view"><h2 class="o-title">${item.t}</h2><p class="o-desc">${item.d}</p>${detHTML}</div>`;
+            
+            if(item.q && item.a) {
+                hasFaq = true;
+                faqList.innerHTML += `<div class="faq-item"><button class="faq-q" onclick="this.nextElementSibling.classList.toggle('show')">${item.q} <span>+</span></button><div class="faq-a">${item.a}</div></div>`;
+            }
+        });
+        if(hasFaq) faqArea.style.display = "block";
+        document.getElementById('inputInterface').style.display = "none";
+        document.getElementById('outputInterface').style.display = "block";
+    }
+
+    function copyLink() {
+        const copyText = document.getElementById("shareLink");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        
+        const btn = document.getElementById("copyBtn");
+        btn.innerText = "COPIED TO CLIPBOARD!";
+        btn.classList.add("copied");
+        
+        setTimeout(() => {
+            btn.innerText = "COPY SHAREABLE LINK";
+            btn.classList.remove("copied");
+        }, 3000);
+    }
+</script>
+</body>
+</html>
