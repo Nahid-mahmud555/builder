@@ -82,27 +82,31 @@
 </div>
 
 <script>
-    // Unicode Safe Base64 Encoding
-    function utoa(str) {
-        return btoa(unescape(encodeURIComponent(str)));
+    // --- Unicode Safe Base64 Helpers ---
+    function base64Encode(str) {
+        const bytes = new TextEncoder().encode(str);
+        const binString = Array.from(bytes, byte => String.fromCodePoint(byte)).join("");
+        return btoa(binString);
     }
 
-    // Unicode Safe Base64 Decoding
-    function atou(str) {
-        return decodeURIComponent(escape(atob(str)));
+    function base64Decode(str) {
+        const binString = atob(str);
+        const bytes = Uint8Array.from(binString, char => char.codePointAt(0));
+        return new TextDecoder().decode(bytes);
     }
+    // ----------------------------------
 
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('d')) {
             try {
                 const encodedData = urlParams.get('d');
-                const jsonStr = atou(encodedData); // Safe decode
+                const jsonStr = base64Decode(encodedData);
                 const data = JSON.parse(jsonStr);
                 renderFromData(data);
                 document.getElementById('shareArea').style.display = "none"; 
             } catch (e) { 
-                console.error("Link Invalid"); 
+                console.error("Invalid Link Data"); 
             }
         }
     }
@@ -133,14 +137,20 @@
 
         titles.forEach((t, i) => {
             if(t.value.trim() !== "") {
-                data.push({ t: t.value, d: descs[i].value, det: details[i].value, q: qs[i].value, a: as[i].value });
+                data.push({ 
+                    t: t.value, 
+                    d: descs[i].value, 
+                    det: details[i].value, 
+                    q: qs[i].value, 
+                    a: as[i].value 
+                });
             }
         });
 
         if (data.length === 0) return alert("Please add at least one title!");
 
         const jsonStr = JSON.stringify(data);
-        const encoded = utoa(jsonStr); // Safe encode
+        const encoded = base64Encode(jsonStr); // বাংলা সেফ এনকোড
         
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         const finalLink = cleanUrl + "?d=" + encoded;
