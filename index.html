@@ -24,7 +24,7 @@
         #outputInterface { display: none; }
         .share-area { text-align: center; margin-bottom: 30px; padding: 20px; background: rgba(0, 210, 255, 0.05); border-radius: 20px; border: 1px dashed var(--border); }
         
-        /* Hidden input but needed for copy */
+        /* Hidden input but needed for copy functionality */
         #shareLink { position: absolute; left: -9999px; }
 
         .copy-btn {
@@ -94,8 +94,11 @@
                 const jsonStr = decodeURIComponent(atob(encodedData));
                 const data = JSON.parse(jsonStr);
                 renderFromData(data);
+                // ভিউ মোডে থাকাকালীন শেয়ার এরিয়া হাইড রাখা
                 document.getElementById('shareArea').style.display = "none"; 
-            } catch (e) { console.error("Link Invalid"); }
+            } catch (e) { 
+                console.error("Link Invalid"); 
+            }
         }
     }
 
@@ -133,7 +136,10 @@
 
         const jsonStr = JSON.stringify(data);
         const encoded = btoa(encodeURIComponent(jsonStr));
-        const finalLink = window.location.href.split('?')[0] + "?d=" + encoded;
+        
+        // ফিক্স: আগের সব কুয়েরি প্যারামিটার বাদ দিয়ে ফ্রেশ লিঙ্ক তৈরি
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        const finalLink = cleanUrl + "?d=" + encoded;
 
         document.getElementById('shareLink').value = finalLink;
         renderFromData(data);
